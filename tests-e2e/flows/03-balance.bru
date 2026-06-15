@@ -1,0 +1,28 @@
+meta {
+  name: Flujo - 3) Calcular Balance
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/reports/balance?from_date=2026-01-01&to_date=2026-01-31&group_by=day
+  auth: none
+}
+
+params:query {
+  from_date: 2026-01-01
+  to_date: 2026-01-31
+  group_by: day
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("el balance refleja la ganancia bruta del período", function () {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(Number(body.total_gross_profit)).to.be.at.least(80.0);
+  });
+}

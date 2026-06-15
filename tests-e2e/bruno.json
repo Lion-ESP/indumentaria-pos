@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "indumentaria-pos",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"]
+}
