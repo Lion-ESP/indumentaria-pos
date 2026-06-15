@@ -651,22 +651,17 @@ exclude_lines = [
 | Adaptadores (`*/adapters/`) | ~75% (sin gate duro) | Cubierta principalmente por integración; mappers y repos sí, no se exige cubrir cada branch defensivo |
 | Entrypoints (`*/entrypoints/`) | cubierta por e2e | Los routers se ejercitan vía `TestClient` |
 
-**Gate por capa (más estricto que el global).** `--cov-fail-under=80` solo cubre el global. Para forzar el **95% en dominio**, se ejecuta un segundo paso scoped en CI:
+**Gate por capa (más estricto que el global).** `--cov-fail-under=80` solo cubre el global. Para forzar el **95% en dominio** se reutiliza el `.coverage` de la corrida completa y se filtra el reporte a las capas de dominio:
 
 ```bash
-# Gate 1 — global 80%
+# Gate 1 — global 80% (produce .coverage con source=app)
 pytest --cov=app --cov-fail-under=80
 
-# Gate 2 — dominio 95% (scoped). Falla el build si baja del umbral.
-pytest tests/unit \
-    --cov=app.inventory.domain \
-    --cov=app.sales.domain \
-    --cov=app.reporting.domain \
-    --cov=app.shared.domain \
-    --cov-fail-under=95
+# Gate 2 — dominio 95%: filtra el .coverage existente a las capas domain.
+coverage report --include="*/domain/*" --fail-under=95
 ```
 
-> Alternativamente, un script post-coverage parsea `coverage.xml` por paquete y aplica umbrales diferenciados (útil si se quiere un único reporte). El enfoque de dos pasos es el más simple y explícito.
+> **Por qué `--include` y no `--cov=app.<ctx>.domain`:** con `source = ["app"]` en `pyproject.toml`, pasar `--cov=app.inventory.domain` igual mide *toda* la app (la unión con `source`), arrastrando el porcentaje hacia abajo cuando existen adapters/entrypoints no cubiertos por los unitarios. `coverage report --include="*/domain/*"` filtra el dato ya recolectado a los módulos de dominio y aplica el umbral solo sobre ellos.
 
 ### 4.3 Definition of Done — "Listo para Producción"
 
@@ -711,7 +706,7 @@ El pipeline vive en `.harness/pipeline.yaml` y **rechaza** todo cambio que: (1) 
 2. type-check               (mypy app)
 3. test de arquitectura     (dominio sin frameworks)
 4. tests unitarios          (pytest tests/unit)          → milisegundos
-5. gate dominio 95%         (cov scoped, --cov-fail-under=95)
+5. gate dominio 95%         (coverage report --include="*/domain/*" --fail-under=95)
 6. tests integración + e2e  (pytest tests/integration tests/e2e)
 7. gate global 80%          (--cov-fail-under=80)
 8. publicar coverage.xml / html  (artefacto del build)

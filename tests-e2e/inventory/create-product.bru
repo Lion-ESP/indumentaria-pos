@@ -12,13 +12,21 @@ post {
 
 body:json {
   {
-    "sku": "REM-001",
+    "sku": "{{sku}}",
     "name": "Remera",
     "unit": "unit",
     "cost_price": "60.00",
     "sale_price": "100.00",
     "initial_stock": "10"
   }
+}
+
+script:pre-request {
+  bru.setVar("sku", "REM-" + Date.now());
+}
+
+script:post-response {
+  bru.setVar("product_id", res.getBody().id);
 }
 
 assert {

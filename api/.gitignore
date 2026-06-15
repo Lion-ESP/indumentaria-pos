@@ -1,0 +1,6 @@
+# Base de datos local de desarrollo
+*.db
+_*.db
+
+# Almacenamiento local de fotos
+media/

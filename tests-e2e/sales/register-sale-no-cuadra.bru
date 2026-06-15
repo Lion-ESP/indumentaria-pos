@@ -1,0 +1,29 @@
+meta {
+  name: Registrar venta que no cuadra (422)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/sales
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "lines": [{ "product_id": "{{product_id}}", "quantity": "2" }],
+    "payments": [{ "method": "cash", "amount": "150.00" }]
+  }
+}
+
+assert {
+  res.status: eq 422
+}
+
+tests {
+  test("rechaza con 422 cuando los pagos no cuadran", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().error.code).to.equal("payments_do_not_match_total");
+  });
+}

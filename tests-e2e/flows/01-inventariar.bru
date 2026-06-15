@@ -12,7 +12,7 @@ post {
 
 body:json {
   {
-    "sku": "FLOW-REM-001",
+    "sku": "{{sku}}",
     "name": "Remera (flujo)",
     "unit": "unit",
     "cost_price": "60.00",
@@ -23,6 +23,10 @@ body:json {
 
 assert {
   res.status: eq 201
+}
+
+script:pre-request {
+  bru.setVar("sku", "FLOW-REM-" + Date.now());
 }
 
 script:post-response {
