@@ -1,0 +1,43 @@
+meta {
+  name: Registrar venta (efectivo)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/sales
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "lines": [{ "product_id": "11111111-1111-1111-1111-111111111111", "quantity": "2" }],
+    "payments": [{ "method": "cash", "amount": "200.00" }]
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+tests {
+  test("status 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("la respuesta cumple el DTO SaleResponse", function () {
+    const body = res.getBody();
+    expect(body).to.include.all.keys("id", "total", "total_paid", "gross_profit");
+  });
+
+  test("contrato de negocio: la venta cuadra (total == pagado)", function () {
+    const body = res.getBody();
+    expect(Number(body.total)).to.equal(Number(body.total_paid));
+  });
+
+  test("contrato de negocio: ganancia bruta = (venta - costo) x cantidad", function () {
+    const body = res.getBody();
+    expect(Number(body.gross_profit)).to.equal(80.0);
+  });
+}

@@ -1,0 +1,46 @@
+meta {
+  name: Crear producto
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/products
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sku": "REM-001",
+    "name": "Remera",
+    "unit": "unit",
+    "cost_price": "60.00",
+    "sale_price": "100.00",
+    "initial_stock": "10"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+tests {
+  test("status 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("la respuesta cumple el DTO ProductResponse", function () {
+    const body = res.getBody();
+    expect(body).to.include.all.keys(
+      "id", "sku", "name", "unit", "cost_price", "sale_price", "stock", "gross_margin_unit"
+    );
+  });
+
+  test("contrato de negocio: margen unitario = venta - costo", function () {
+    const body = res.getBody();
+    expect(Number(body.gross_margin_unit)).to.equal(
+      Number(body.sale_price) - Number(body.cost_price)
+    );
+  });
+}

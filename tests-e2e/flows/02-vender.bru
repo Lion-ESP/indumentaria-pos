@@ -1,0 +1,31 @@
+meta {
+  name: Flujo - 2) Vender
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/sales
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "lines": [{ "product_id": "{{product_id}}", "quantity": "2" }],
+    "payments": [{ "method": "cash", "amount": "200.00" }]
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+tests {
+  test("la venta cuadra y calcula la ganancia bruta", function () {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(Number(body.total)).to.equal(Number(body.total_paid));
+    expect(Number(body.gross_profit)).to.equal(80.0);
+  });
+}

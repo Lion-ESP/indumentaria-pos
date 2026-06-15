@@ -1,0 +1,25 @@
+meta {
+  name: Consultar producto
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/products/11111111-1111-1111-1111-111111111111
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("status 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("estructura ProductResponse", function () {
+    const body = res.getBody();
+    expect(body).to.include.all.keys("id", "sku", "stock");
+  });
+}
