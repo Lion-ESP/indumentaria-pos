@@ -1,22 +1,47 @@
 from __future__ import annotations
 
-from decimal import Decimal
-from uuid import uuid4
+from fastapi import APIRouter, Depends, status
 
-from fastapi import APIRouter, status
-
+from app.sales.adapters.repositories import SqlSaleRepository
+from app.sales.application.commands import (
+    LineCommand,
+    PaymentCommand,
+    RegisterSaleCommand,
+)
+from app.sales.application.use_cases import RegisterSaleUseCase
+from app.sales.entrypoints.dependencies import (
+    get_register_sale_use_case,
+    get_sale_repository,
+)
 from app.sales.entrypoints.schemas import RegisterSaleRequest, SaleResponse
 
 router = APIRouter(prefix="/sales", tags=["sales"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=SaleResponse)
-def register_sale(body: RegisterSaleRequest) -> SaleResponse:
-    # FASE 1 — mock determinista alineado con el ejemplo del PRD
-    # (2 remeras a 100 con costo 60 = total 200, ganancia bruta 80).
+def register_sale(
+    body: RegisterSaleRequest,
+    use_case: RegisterSaleUseCase = Depends(get_register_sale_use_case),
+    repository: SqlSaleRepository = Depends(get_sale_repository),
+) -> SaleResponse:
+    command = RegisterSaleCommand(
+        lines=[LineCommand(line.product_id, line.quantity) for line in body.lines],
+        payments=[
+            PaymentCommand(
+                payment.method,
+                payment.amount,
+                payment.installments_count,
+                payment.surcharge_rate,
+            )
+            for payment in body.payments
+        ],
+    )
+    sale_id = use_case.execute(command)
+    sale = repository.get(sale_id)
+    assert sale is not None
     return SaleResponse(
-        id=uuid4(),
-        total=Decimal("200.00"),
-        total_paid=Decimal("200.00"),
-        gross_profit=Decimal("80.00"),
+        id=sale.id,
+        total=sale.total.amount,
+        total_paid=sale.total_paid.amount,
+        gross_profit=sale.gross_profit.amount,
     )

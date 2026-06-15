@@ -1,0 +1,29 @@
+meta {
+  name: Registrar venta sin stock (409)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/sales
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "lines": [{ "product_id": "{{product_id}}", "quantity": "999" }],
+    "payments": [{ "method": "cash", "amount": "99900.00" }]
+  }
+}
+
+assert {
+  res.status: eq 409
+}
+
+tests {
+  test("rechaza con 409 cuando no hay stock suficiente", function () {
+    expect(res.getStatus()).to.equal(409);
+    expect(res.getBody().error.code).to.equal("insufficient_stock");
+  });
+}

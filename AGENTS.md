@@ -77,13 +77,11 @@ cd api && uvicorn app.main:app
 cd tests-e2e && bru run --env local
 ```
 
-**Regla de coverage del dominio:** si la cobertura de la capa de dominio (`app/*/domain/`, `app/shared/domain/`) es menor al **95%**, debes refactorizar o añadir más casos de prueba antes de finalizar. El gate dominio se valida con un paso scoped:
+**Regla de coverage del dominio:** si la cobertura de la capa de dominio (`app/*/domain/`, `app/shared/domain/`) es menor al **95%**, debes refactorizar o añadir más casos de prueba antes de finalizar. El gate dominio reutiliza el `.coverage` de la corrida completa y filtra a las capas de dominio:
 
 ```bash
-pytest tests/unit \
-    --cov=app.inventory.domain --cov=app.sales.domain \
-    --cov=app.reporting.domain --cov=app.shared.domain \
-    --cov-fail-under=95
+pytest --cov=app --cov-fail-under=80          # produce .coverage
+coverage report --include="*/domain/*" --fail-under=95
 ```
 
 ---
