@@ -9,7 +9,7 @@ from app.api_client import ApiError, PaymentInput, PosApiClient, SaleInput, Sale
 
 
 def build_sales_view(page: ft.Page, client: PosApiClient) -> ft.Control:
-    product_id = ft.TextField(label="ID de producto", width=320)
+    product = ft.Dropdown(label="Producto", width=360)
     quantity = ft.TextField(label="Cantidad", value="1", width=120)
     method = ft.Dropdown(
         label="Medio de pago",
@@ -25,13 +25,38 @@ def build_sales_view(page: ft.Page, client: PosApiClient) -> ft.Control:
     amount = ft.TextField(label="Monto pagado", width=140)
     status = ft.Text()
 
+    def load_products() -> None:
+        try:
+            productos = client.list_products()
+        except ApiError as error:
+            status.value = error.friendly_message
+            return
+        product.options = [
+            ft.dropdown.Option(
+                key=str(p.id),
+                text=f"{p.sku} · {p.name} · stock {p.stock} {p.unit}",
+            )
+            for p in productos
+        ]
+        if not productos:
+            status.value = "No hay productos cargados. Creá uno en Inventario."
+
+    def on_refresh() -> None:
+        load_products()
+        page.update()
+
     def on_register() -> None:
+        selected = product.value
+        if not selected:
+            status.value = "Seleccioná un producto."
+            page.update()
+            return
         try:
             venta = client.register_sale(
                 SaleInput(
                     lines=[
                         SaleLineInput(
-                            product_id=UUID(product_id.value or ""),
+                            product_id=UUID(selected),
                             quantity=Decimal(quantity.value or "0"),
                         )
                     ],
@@ -44,17 +69,19 @@ def build_sales_view(page: ft.Page, client: PosApiClient) -> ft.Control:
                 )
             )
             status.value = f"Venta registrada · total {venta.total} · ganancia {venta.gross_profit}"
+            load_products()
         except (InvalidOperation, ValueError):
-            status.value = "Revisá el ID del producto, la cantidad y el monto."
+            status.value = "La cantidad y el monto deben ser numéricos."
         except ApiError as error:
             status.value = error.friendly_message
         page.update()
 
+    load_products()
     return ft.Column(
         [
             ft.Text("Registrar venta", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([product_id, quantity], wrap=True),
-            ft.Row([method, amount], wrap=True),
+            ft.Row([product, ft.IconButton(icon=ft.Icons.REFRESH, on_click=on_refresh)]),
+            ft.Row([quantity, method, amount], wrap=True),
             ft.FilledButton("Registrar venta", on_click=on_register),
             status,
         ],
