@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from app.inventory.domain.exceptions import StockInsuficienteException
+from app.inventory.domain.exceptions import DuplicateSku, StockInsuficienteException
 from app.sales.domain.exceptions import CuotasInvalidasException, VentaNoCuadraException
 from app.shared.domain.exceptions import (
     BusinessRuleViolation,
@@ -12,10 +12,12 @@ from app.shared.domain.exceptions import (
 )
 
 # Mapa explícito excepción-de-dominio -> status HTTP. El dominio no conoce HTTP;
-# este es el único punto de traducción.
+# este es el único punto de traducción. El orden importa: las subclases más
+# específicas van antes que su base (DuplicateSku antes que BusinessRuleViolation).
 _STATUS_MAP: dict[type[DomainException], int] = {
     EntityNotFound: status.HTTP_404_NOT_FOUND,
     StockInsuficienteException: status.HTTP_409_CONFLICT,
+    DuplicateSku: status.HTTP_409_CONFLICT,
     VentaNoCuadraException: status.HTTP_422_UNPROCESSABLE_ENTITY,
     CuotasInvalidasException: status.HTTP_422_UNPROCESSABLE_ENTITY,
     BusinessRuleViolation: status.HTTP_422_UNPROCESSABLE_ENTITY,

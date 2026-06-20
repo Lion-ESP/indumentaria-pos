@@ -6,7 +6,7 @@ from uuid import UUID
 from app.inventory.application.commands import AdjustStockCommand, CreateProductCommand
 from app.inventory.application.unit_of_work import InventoryUnitOfWork
 from app.inventory.domain.entities import Product
-from app.inventory.domain.exceptions import ProductNotFound
+from app.inventory.domain.exceptions import DuplicateSku, ProductNotFound
 from app.shared.domain.money import Money
 from app.shared.domain.quantity import Quantity
 
@@ -17,6 +17,8 @@ class CreateProductUseCase:
 
     def execute(self, command: CreateProductCommand) -> UUID:
         with self._uow:
+            if self._uow.products.get_by_sku(command.sku) is not None:
+                raise DuplicateSku(command.sku)
             product = Product(
                 sku=command.sku,
                 name=command.name,

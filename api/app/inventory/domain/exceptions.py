@@ -2,11 +2,19 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from app.shared.domain.exceptions import DomainException, EntityNotFound
+from app.shared.domain.exceptions import BusinessRuleViolation, DomainException, EntityNotFound
 
 
 class ProductNotFound(EntityNotFound):
     code = "product_not_found"
+
+
+class DuplicateSku(BusinessRuleViolation):
+    code = "duplicate_sku"
+
+    def __init__(self, sku: str) -> None:
+        super().__init__(f"Ya existe un producto con el SKU '{sku}'")
+        self.sku = sku
 
 
 class StockInsuficienteException(DomainException):

@@ -12,7 +12,7 @@ from app.inventory.application.use_cases import (
     CreateProductUseCase,
 )
 from app.inventory.domain.entities import Product
-from app.inventory.domain.exceptions import ProductNotFound
+from app.inventory.domain.exceptions import DuplicateSku, ProductNotFound
 from app.shared.domain.money import Money
 from app.shared.domain.quantity import Quantity, UnitOfMeasure
 
@@ -22,6 +22,7 @@ def uow() -> MagicMock:
     fake = MagicMock()
     fake.__enter__.return_value = fake
     fake.__exit__.return_value = False
+    fake.products.get_by_sku.return_value = None
     return fake
 
 
@@ -44,6 +45,31 @@ class TestCreateProductUseCase:
         uow.commit.assert_called_once()
         persisted = uow.products.add.call_args.args[0]
         assert persisted.current_stock.value == Decimal("2.750")
+
+    def test_sku_duplicado_lanza_y_no_commitea(self, uow: MagicMock) -> None:
+        existente = Product(
+            sku="CINTA-01",
+            name="Cinta",
+            unit=UnitOfMeasure.METER,
+            cost_price=Money(Decimal("120.50")),
+            sale_price=Money(Decimal("200.00")),
+            stock=Quantity(Decimal("1"), UnitOfMeasure.METER),
+        )
+        uow.products.get_by_sku.return_value = existente
+        use_case = CreateProductUseCase(uow)
+        command = CreateProductCommand(
+            sku="CINTA-01",
+            name="Cinta",
+            unit=UnitOfMeasure.METER,
+            cost_price=Decimal("120.50"),
+            sale_price=Decimal("200.00"),
+            initial_stock=Decimal("2.750"),
+        )
+
+        with pytest.raises(DuplicateSku):
+            use_case.execute(command)
+        uow.products.add.assert_not_called()
+        uow.commit.assert_not_called()
 
 
 @pytest.mark.unit

@@ -14,7 +14,7 @@
   - [x] Causa identificada (UI, no cliente ni persistencia).
   - [x] Una venta válida se registra eligiendo el producto de la lista.
   - [x] Feedback claro: "Seleccioná un producto" / "La cantidad y el monto deben ser numéricos".
-  - [ ] **Pendiente:** revisión general de layout/diseño de las tres vistas (si persisten detalles visuales, abrir ítem aparte con capturas).
+  - [x] Revisión general de layout/diseño de las tres vistas (rama `feat/validaciones-ui`): navegación por pestañas, tarjetas por sección, validación inline por campo y feedback con SnackBar.
 
 ---
 
@@ -44,6 +44,14 @@
 - **Criterios de aceptación:**
   - [ ] `SaleResponse` incluye las cuotas (número, monto, vencimiento) cuando el pago es con tarjeta.
   - [ ] La UI de ventas muestra el detalle de cuotas.
+
+### FEAT-vuelto — Cálculo de vuelto en la vista de ventas
+- **Contexto:** al registrar una venta no hay referencia visual del precio del producto ni cálculo del cambio a entregar; el operador calcula el vuelto de cabeza.
+- **Criterios de aceptación:**
+  - [ ] La vista de ventas muestra, a modo informativo, el precio de venta del producto seleccionado (idealmente el total = precio × cantidad).
+  - [ ] Una casilla calcula en tiempo real, al cargar el monto pagado, la diferencia respecto del total: vuelto a entregar si sobra, faltante si falta.
+  - [ ] Si el monto abonado es menor al total de la venta, se muestra una advertencia que el operador debe confirmar antes de registrar.
+  - [ ] El cálculo se actualiza al cambiar producto, cantidad o monto pagado.
 
 ### FEAT-gastos — Ganancia neta real
 - **Contexto:** hoy `net_profit == gross_profit` (no hay egresos registrados).
