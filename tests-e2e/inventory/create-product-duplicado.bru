@@ -1,0 +1,33 @@
+meta {
+  name: Crear producto con SKU duplicado (409)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/products
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sku": "{{sku}}",
+    "name": "Remera duplicada",
+    "unit": "unit",
+    "cost_price": "60.00",
+    "sale_price": "100.00",
+    "initial_stock": "10"
+  }
+}
+
+assert {
+  res.status: eq 409
+}
+
+tests {
+  test("rechaza con 409 cuando el SKU ya existe", function () {
+    expect(res.getStatus()).to.equal(409);
+    expect(res.getBody().error.code).to.equal("duplicate_sku");
+  });
+}

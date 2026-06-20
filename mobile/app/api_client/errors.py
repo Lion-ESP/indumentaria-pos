@@ -8,6 +8,7 @@ _FRIENDLY_MESSAGES = {
     "payments_do_not_match_total": "Los pagos no coinciden con el total de la venta.",
     "invalid_installments": "La cantidad de cuotas es inválida.",
     "product_not_found": "El producto no existe.",
+    "duplicate_sku": "Ya existe un producto con ese SKU.",
 }
 
 

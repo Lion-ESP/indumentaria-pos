@@ -62,6 +62,24 @@ def test_create_product_rechaza_unidad_invalida(client: TestClient) -> None:
 
 
 @pytest.mark.e2e
+def test_create_product_sku_duplicado_devuelve_409(client: TestClient) -> None:
+    _create_product(client, sku="DUP-001")
+    resp = client.post(
+        "/products",
+        json={
+            "sku": "DUP-001",
+            "name": "Otra remera",
+            "unit": "unit",
+            "cost_price": "60.00",
+            "sale_price": "100.00",
+            "initial_stock": "5",
+        },
+    )
+    assert resp.status_code == 409
+    assert resp.json()["error"]["code"] == "duplicate_sku"
+
+
+@pytest.mark.e2e
 def test_get_y_list_product(client: TestClient) -> None:
     created = _create_product(client)
     detalle = client.get(f"/products/{created['id']}")
