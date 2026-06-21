@@ -19,7 +19,13 @@ from app.views.ui import notify, section_card
 
 
 def build_sales_view(page: ft.Page, client: PosApiClient) -> ft.Control:
-    product = ft.Dropdown(label="Producto", width=360)
+    product = ft.Dropdown(
+        label="Producto",
+        width=360,
+        editable=True,
+        enable_filter=True,
+        enable_search=True,
+    )
     quantity = ft.TextField(label="Cantidad", value="1", width=120)
     method = ft.Dropdown(
         label="Medio de pago",
