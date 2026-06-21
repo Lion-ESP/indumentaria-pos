@@ -71,6 +71,25 @@ class TestCreateProductUseCase:
         uow.products.add.assert_not_called()
         uow.commit.assert_not_called()
 
+    def test_genera_sku_correlativo_cuando_no_se_provee(self, uow: MagicMock) -> None:
+        uow.products.next_auto_sku_number.return_value = 7
+        use_case = CreateProductUseCase(uow)
+        command = CreateProductCommand(
+            sku=None,
+            name="Remera",
+            unit=UnitOfMeasure.UNIT,
+            cost_price=Decimal("60.00"),
+            sale_price=Decimal("100.00"),
+            initial_stock=Decimal("3"),
+        )
+
+        use_case.execute(command)
+
+        persisted = uow.products.add.call_args.args[0]
+        assert persisted.sku == "ART-0007"
+        uow.products.get_by_sku.assert_not_called()
+        uow.commit.assert_called_once()
+
 
 @pytest.mark.unit
 class TestAdjustStockUseCase:

@@ -67,13 +67,14 @@ class PosApiClient:
 
     def create_product(self, data: ProductInput) -> Product:
         body = {
-            "sku": data.sku,
             "name": data.name,
             "unit": data.unit,
             "cost_price": str(data.cost_price),
             "sale_price": str(data.sale_price),
             "initial_stock": str(data.initial_stock),
         }
+        if data.sku:
+            body["sku"] = data.sku
         return _to_product(self._request("POST", "/products", json=body))
 
     def list_products(self) -> list[Product]:
