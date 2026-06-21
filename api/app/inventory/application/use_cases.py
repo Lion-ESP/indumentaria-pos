@@ -7,6 +7,7 @@ from app.inventory.application.commands import AdjustStockCommand, CreateProduct
 from app.inventory.application.unit_of_work import InventoryUnitOfWork
 from app.inventory.domain.entities import Product
 from app.inventory.domain.exceptions import DuplicateSku, ProductNotFound
+from app.inventory.domain.sku import format_auto_sku
 from app.shared.domain.money import Money
 from app.shared.domain.quantity import Quantity
 
@@ -17,10 +18,14 @@ class CreateProductUseCase:
 
     def execute(self, command: CreateProductCommand) -> UUID:
         with self._uow:
-            if self._uow.products.get_by_sku(command.sku) is not None:
-                raise DuplicateSku(command.sku)
+            if command.sku:
+                if self._uow.products.get_by_sku(command.sku) is not None:
+                    raise DuplicateSku(command.sku)
+                sku = command.sku
+            else:
+                sku = format_auto_sku(self._uow.products.next_auto_sku_number())
             product = Product(
-                sku=command.sku,
+                sku=sku,
                 name=command.name,
                 unit=command.unit,
                 cost_price=Money(command.cost_price),

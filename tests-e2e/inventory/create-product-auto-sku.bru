@@ -1,0 +1,35 @@
+meta {
+  name: Crear producto con SKU autogenerado
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/products
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Pantalón sin SKU",
+    "unit": "unit",
+    "cost_price": "60.00",
+    "sale_price": "100.00",
+    "initial_stock": "5"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+tests {
+  test("status 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("el backend autogenera un SKU con el prefijo ART-", function () {
+    expect(res.getBody().sku).to.match(/^ART-\d{4,}$/);
+  });
+}

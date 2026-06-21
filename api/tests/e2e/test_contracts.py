@@ -19,21 +19,20 @@ PRODUCT_KEYS = {
 
 def _create_product(
     client: TestClient,
-    sku: str = "REM-001",
+    sku: str | None = "REM-001",
     unit: str = "unit",
     stock: str = "10",
 ) -> dict:
-    resp = client.post(
-        "/products",
-        json={
-            "sku": sku,
-            "name": "Remera",
-            "unit": unit,
-            "cost_price": "60.00",
-            "sale_price": "100.00",
-            "initial_stock": stock,
-        },
-    )
+    body = {
+        "name": "Remera",
+        "unit": unit,
+        "cost_price": "60.00",
+        "sale_price": "100.00",
+        "initial_stock": stock,
+    }
+    if sku is not None:
+        body["sku"] = sku
+    resp = client.post("/products", json=body)
     assert resp.status_code == 201, resp.text
     return resp.json()
 
@@ -77,6 +76,14 @@ def test_create_product_sku_duplicado_devuelve_409(client: TestClient) -> None:
     )
     assert resp.status_code == 409
     assert resp.json()["error"]["code"] == "duplicate_sku"
+
+
+@pytest.mark.e2e
+def test_create_product_genera_sku_correlativo_cuando_se_omite(client: TestClient) -> None:
+    primero = _create_product(client, sku=None)
+    segundo = _create_product(client, sku=None)
+    assert primero["sku"] == "ART-0001"
+    assert segundo["sku"] == "ART-0002"
 
 
 @pytest.mark.e2e

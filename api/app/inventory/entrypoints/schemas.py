@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class CreateProductRequest(BaseModel):
-    sku: str = Field(min_length=1, max_length=64)
+    sku: str | None = Field(default=None, min_length=1, max_length=64)
     name: str = Field(min_length=1)
     unit: str = Field(pattern="^(unit|meter|kg)$")
     cost_price: Decimal = Field(ge=0)

@@ -9,7 +9,7 @@ from app.shared.domain.quantity import UnitOfMeasure
 
 @dataclass(frozen=True)
 class CreateProductCommand:
-    sku: str
+    sku: str | None
     name: str
     unit: UnitOfMeasure
     cost_price: Decimal

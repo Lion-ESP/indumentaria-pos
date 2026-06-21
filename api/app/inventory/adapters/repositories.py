@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from app.inventory.adapters import mappers
 from app.inventory.adapters.models import ProductModel
 from app.inventory.domain.entities import Product
+from app.inventory.domain.sku import parse_auto_sku
 
 
 class SqlProductRepository:
@@ -22,6 +23,11 @@ class SqlProductRepository:
     def get_by_sku(self, sku: str) -> Product | None:
         row = self._session.exec(select(ProductModel).where(ProductModel.sku == sku)).first()
         return mappers.to_domain(row) if row else None
+
+    def next_auto_sku_number(self) -> int:
+        skus = self._session.exec(select(ProductModel.sku)).all()
+        numbers = [n for sku in skus if (n := parse_auto_sku(sku)) is not None]
+        return max(numbers) + 1 if numbers else 1
 
     def list_active(self) -> list[Product]:
         rows = self._session.exec(select(ProductModel).where(ProductModel.active)).all()

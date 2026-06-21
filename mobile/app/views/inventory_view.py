@@ -10,7 +10,8 @@ from app.views.ui import notify, section_card
 
 
 def build_inventory_view(page: ft.Page, client: PosApiClient) -> ft.Control:
-    sku = ft.TextField(label="SKU", width=200)
+    sku = ft.TextField(label="SKU", width=200, disabled=True, hint_text="Se genera solo")
+    auto_sku = ft.Checkbox(label="SKU automático", value=True)
     name = ft.TextField(label="Nombre", width=240)
     unit = ft.Dropdown(
         label="Unidad",
@@ -29,7 +30,7 @@ def build_inventory_view(page: ft.Page, client: PosApiClient) -> ft.Control:
     listado = ft.Column(spacing=4)
 
     def validate() -> bool:
-        sku.error = v.required(sku.value)
+        sku.error = None if auto_sku.value else v.required(sku.value)
         name.error = v.required(name.value)
         cost_price.error = v.positive_decimal(cost_price.value)
         sale_price.error = v.positive_decimal(sale_price.value) or v.sale_above_cost(
@@ -54,6 +55,14 @@ def build_inventory_view(page: ft.Page, client: PosApiClient) -> ft.Control:
         validate()
         page.update()
 
+    def on_toggle_auto_sku() -> None:
+        sku.disabled = bool(auto_sku.value)
+        if auto_sku.value:
+            sku.value = ""
+            sku.error = None
+        validate()
+        page.update()
+
     def on_create() -> None:
         if not validate():
             page.update()
@@ -61,7 +70,7 @@ def build_inventory_view(page: ft.Page, client: PosApiClient) -> ft.Control:
         try:
             producto = client.create_product(
                 ProductInput(
-                    sku=sku.value or "",
+                    sku="" if auto_sku.value else (sku.value or ""),
                     name=name.value or "",
                     unit=unit.value or "unit",
                     cost_price=v.parse_decimal(cost_price.value) or Decimal("0"),
@@ -80,11 +89,16 @@ def build_inventory_view(page: ft.Page, client: PosApiClient) -> ft.Control:
 
     for field in (sku, name, cost_price, sale_price, initial_stock):
         field.on_change = on_change
+    auto_sku.on_change = on_toggle_auto_sku
 
     refresh()
     body = ft.Column(
         [
-            ft.Row([sku, name, unit], wrap=True),
+            ft.Row(
+                [sku, auto_sku, name, unit],
+                wrap=True,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
             ft.Row([cost_price, sale_price, initial_stock], wrap=True),
             ft.FilledButton("Crear producto", icon=ft.Icons.ADD, on_click=on_create),
             ft.Divider(),

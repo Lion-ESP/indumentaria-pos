@@ -50,8 +50,37 @@ def test_create_product_serializa_y_parsea() -> None:
 
     enviado = route.calls.last.request
     assert b'"cost_price":"60"' in enviado.content
+    assert b'"sku":"REM-001"' in enviado.content
     assert producto.gross_margin_unit == Decimal("40.00")
     assert producto.stock == Decimal("10")
+
+
+@pytest.mark.unit
+@respx.mock
+def test_create_product_sin_sku_omite_el_campo() -> None:
+    route = respx.post(f"{BASE_URL}/products").mock(
+        return_value=httpx.Response(
+            201,
+            json={
+                "id": str(uuid4()),
+                "sku": "ART-0001",
+                "name": "Remera",
+                "unit": "unit",
+                "cost_price": "60.00",
+                "sale_price": "100.00",
+                "stock": "10",
+                "gross_margin_unit": "40.00",
+            },
+        )
+    )
+
+    with _client() as client:
+        producto = client.create_product(
+            ProductInput("", "Remera", "unit", Decimal("60"), Decimal("100"), Decimal("10"))
+        )
+
+    assert b'"sku"' not in route.calls.last.request.content
+    assert producto.sku == "ART-0001"
 
 
 @pytest.mark.unit
